@@ -2,8 +2,8 @@ name: Job Scraper Cron
 
 on:
   schedule:
-    - cron: "0 * * * *"   # every 1 hour
-    
+    - cron: "*/5 * * * *"   # every 5 min
+
   workflow_dispatch:   
 
 jobs:
