@@ -1,9 +1,10 @@
 name: Job Scraper Cron
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"   # every 5 min
-
+  push:
+    branches:
+      - main
+      
   workflow_dispatch:   
 
 jobs:
