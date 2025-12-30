@@ -1,3 +1,5 @@
+import os
+
 from scrapers.amazon import scrape as scrape_amazon
 from scrapers.microsoft import scrape as scrape_microsoft
 from db_writer import save_jobs
