@@ -25,25 +25,42 @@ def save_jobs(
         with conn.cursor() as cur:
             company_ids = _get_company_ids(cur)
 
-            rows = []
+            # --------------------------------------------------
+            # Deduplicate rows by (company_id, external_job_id)
+            # --------------------------------------------------
+            unique_rows = {}
+
             for j in jobs:
                 company = j.get("company")
                 if company not in company_ids:
                     raise RuntimeError(f"Company not found in DB: {company}")
 
-                rows.append((
-                    company_ids[company],
-                    str(j.get("external_job_id")),
+                company_id = company_ids[company]
+                external_job_id = str(j.get("external_job_id"))
+
+                key = (company_id, external_job_id)
+
+                # Last write wins (latest scrape data preserved)
+                unique_rows[key] = (
+                    company_id,
+                    external_job_id,
                     j.get("job_id"),
                     j.get("title"),
                     j.get("posting_url"),
                     j.get("posted_at"),
                     json.dumps(j.get("locations") or []),
-                ))
+                )
+
+            rows = list(unique_rows.values())
 
             if not rows:
                 return 0
 
+            print(f"DB Writer: deduped {len(jobs)} → {len(rows)} rows")
+
+            # --------------------------------------------------
+            # Upsert SQL
+            # --------------------------------------------------
             if update_last_seen:
                 sql = """
                 insert into jobs (
@@ -88,4 +105,5 @@ def save_jobs(
 
             execute_values(cur, sql, rows, page_size=200)
             conn.commit()
+
             return cur.rowcount
