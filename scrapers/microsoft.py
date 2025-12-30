@@ -10,7 +10,7 @@ SEARCH = f"{BASE}/api/pcsx/search"
 
 _REJECT_TITLE = re.compile(
     r"\b("
-    r"principal|staff|senior|sr\.?|lead|manager|director|head|vp|architect|"
+    r"principal|staff|senior|sr\.?|lead|manager|director|head|vp|architect|CTJ"
     r"distinguished|fellow|"
     r"sde\s*(3|iii|4|iv)|"
     r"software engineer\s*(iii|3|iv|4|v|5)"
