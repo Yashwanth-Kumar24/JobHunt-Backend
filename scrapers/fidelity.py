@@ -4,12 +4,14 @@ import requests
 from datetime import datetime, timedelta
 from typing import List, Dict
 
-BASE_URL = "https://salesforce.wd12.myworkdayjobs.com/en-US/External_Career_Site"
-API_URL = "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/External_Career_Site/jobs"
+BASE_URL = "https://fmr.wd1.myworkdayjobs.com/FidelityCareers"
+API_URL = "https://fmr.wd1.myworkdayjobs.com/wday/cxs/fmr/FidelityCareers/jobs"
 
-# Exclude leadership roles (senior / sr allowed)
 REJECT_TITLE = re.compile(
-    r"\b(manager|principal|lead|architect)\b",
+    r"\b("
+    r"director|principal|manager|lead|team\s*leader|"
+    r"vice\s*president|president|squad\s*leader"
+    r")\b",
     re.IGNORECASE,
 )
 
@@ -55,11 +57,11 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
     for page in range(max_pages):
         payload = {
             "appliedFacets": {
-                "CF_-_REC_-_LRV_-_Job_Posting_Anchor_-_Country_from_Job_Posting_Location_Extended": [
+                "locationCountry": [
                     "bc33aa3152ec42d4995f4791a106ed09"
                 ],
                 "jobFamilyGroup": [
-                    "14fa3452ec7c1011f90d0002a2100000"
+                    "e39fd413f80c0104eb5775256a997b12"
                 ],
             },
             "limit": page_size,
@@ -89,7 +91,7 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
             external_job_id = bullet[0]
 
             jobs.append({
-                "company": "Salesforce",
+                "company": "Fidelity Investments",
                 "external_job_id": external_job_id,
                 "job_id": external_job_id,
                 "title": title,
@@ -100,20 +102,19 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
 
             kept += 1
 
-        print(f"Salesforce page {page + 1}: scanned={len(postings)} kept={kept}")
+        print(f"Fidelity page {page + 1}: scanned={len(postings)} kept={kept}")
 
         offset += page_size
         time.sleep(0.4)
-    deduped = {}
-    for job in jobs:
-        deduped[job["external_job_id"]] = job
-    print("Salesforce jobs:", len(list(deduped.values())))
-    return list(deduped.values())
+    # Final dedupe by external_job_id
+    deduped = {j["external_job_id"]: j for j in jobs}
+    print("Fidelity jobs:", len(deduped))
 
+    return list(deduped.values())
 
 
 if __name__ == "__main__":
     res = scrape(max_pages=5)
-    print("Salesforce jobs:", len(res))
+    print("Fidelity jobs:", len(res))
     if res:
         print("Sample:", res[0])
