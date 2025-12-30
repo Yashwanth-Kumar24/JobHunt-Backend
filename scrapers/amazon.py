@@ -1,34 +1,18 @@
 import re
-import json
 import time
 import requests
 from datetime import datetime
+from typing import List, Dict
 
 AMAZON_SEARCH_URL = "https://www.amazon.jobs/en/search.json"
 
-_KEEP_TITLE = re.compile(
+# Reject only senior / leadership roles
+REJECT_TITLE = re.compile(
     r"\b("
-    r"software (development )?engineer\s*i\b|"
-    r"software developer\s*i\b|"
-    r"sde\s*i\b|sde\s*1\b|sde1\b|"
-    r"sde\s*ii\b|sde\s*2\b|sde2\b|"
-    r"new grad|new graduate|graduate|"
-    r"entry level|junior|jr\.?\b"
-    r")",
-    re.IGNORECASE,
-)
-
-_REJECT_TITLE = re.compile(
-    r"\b("
-    r"senior|sr\.?|principal|staff|lead|manager|architect|"
-    r"\bii\b|\biii\b|\biv\b|\bv\b|"
-    r"sde\s*(iii|iv)|"
-    r"engineer\s*(ii|iii|iv)"
+    r"senior|sr\.?|principal|lead|manager|architect|staff"
     r")\b",
     re.IGNORECASE,
 )
-
-_YEARS_RE = re.compile(r"(\d+)\s*\+\s*years", re.IGNORECASE)
 
 
 def _parse_posted_date(s: str):
@@ -40,40 +24,11 @@ def _parse_posted_date(s: str):
         return None
 
 
-def _looks_junior(job: dict) -> bool:
-    title = (job.get("title") or "").strip()
-    if not title:
-        return False
-
-    if not _KEEP_TITLE.search(title):
-        return False
-
-    if _REJECT_TITLE.search(title):
-        return False
-
-    bq = job.get("basic_qualifications") or ""
-    m = _YEARS_RE.search(bq)
-    if m and int(m.group(1)) >= 3:
-        return False
-
-    return True
-
-
-def _fetch_page(offset: int, limit: int) -> dict:
-    params = {
-        "base_query": "software development engineer",
-        "loc_query": "united states",
-        "country": "USA",
-        "offset": offset,
-        "result_limit": limit,
-        "sort": "relevant",
-    }
-    r = requests.get(AMAZON_SEARCH_URL, params=params, timeout=20)
-    r.raise_for_status()
-    return r.json()
-
-
-def _normalize_location(raw: str) -> list:
+def _normalize_location(raw: str) -> List[str]:
+    """
+    Input:  Sunnyvale, California, USA
+    Output: Sunnyvale, CA, US
+    """
     if not raw:
         return []
 
@@ -82,25 +37,64 @@ def _normalize_location(raw: str) -> list:
         return [raw]
 
     city, state, country = parts
+
     state_map = {
-        "California": "CA",
         "Washington": "WA",
-        "Texas": "TX",
+        "California": "CA",
         "New York": "NY",
+        "Texas": "TX",
+        "Virginia": "VA",
+        "Massachusetts": "MA",
+        "Colorado": "CO",
+        "New Jersey": "NJ",
+        "Georgia": "GA",
+        "Illinois": "IL",
+        "Wisconsin": "WI",
+        "Michigan": "MI",
+        "Florida": "FL",
+        "Maryland": "MD",
+        "Nevada": "NV",
+        "Ohio": "OH",
+        "Minnesota": "MN",
+        "Tennessee": "TN",
+        "Missouri": "MO",
     }
+
+
     country_map = {
         "USA": "US",
         "United States": "US",
     }
 
-    return [f"{city}, {state_map.get(state, state)}, {country_map.get(country, country)}"]
+    return [
+        f"{city}, {state_map.get(state, state)}, {country_map.get(country, country)}"
+    ]
 
 
-def scrape(max_pages: int = 50, page_size: int = 100) -> list[dict]:
+def _fetch_page(offset: int, limit: int) -> Dict:
     """
-    Returns normalized Amazon jobs
+    Use the SAME filters as browser:
+    - Software Development
+    - United States
     """
-    results = []
+    params = {
+        "offset": offset,
+        "result_limit": limit,
+        "sort": "relevant",
+        "category[]": "software-development",
+        "country[]": "USA",
+    }
+
+    r = requests.get(AMAZON_SEARCH_URL, params=params, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+
+def scrape(max_pages: int = 10, page_size: int = 100) -> List[Dict]:
+    """
+    Returns normalized Amazon Software Development jobs (US only)
+    """
+    results: List[Dict] = []
 
     for page in range(max_pages):
         data = _fetch_page(page * page_size, page_size)
@@ -108,8 +102,20 @@ def scrape(max_pages: int = 50, page_size: int = 100) -> list[dict]:
         if not jobs:
             break
 
+        kept = 0
+
         for j in jobs:
-            if not _looks_junior(j):
+            # 1️⃣ Enforce country
+            if j.get("country_code") != "USA":
+                continue
+
+            # 2️⃣ Enforce software development category
+            if j.get("job_category") != "Software Development":
+                continue
+
+            # 3️⃣ Reject senior / leadership roles
+            title = j.get("title") or ""
+            if REJECT_TITLE.search(title):
                 continue
 
             external_id = str(j.get("id_icims") or j.get("id"))
@@ -119,7 +125,7 @@ def scrape(max_pages: int = 50, page_size: int = 100) -> list[dict]:
                 "company": "Amazon",
                 "external_job_id": external_id,
                 "job_id": external_id,
-                "title": j.get("title"),
+                "title": title,
                 "posting_url": (
                     f"https://www.amazon.jobs{job_path}"
                     if job_path.startswith("/")
@@ -129,12 +135,24 @@ def scrape(max_pages: int = 50, page_size: int = 100) -> list[dict]:
                 "locations": _normalize_location(j.get("normalized_location")),
             })
 
-        time.sleep(0.3)
 
-    results.sort(key=lambda x: x.get("posted_at") or "", reverse=True)
-    print("Amazon jobs:", len(results))
-    return results
+            kept += 1
+
+        print(
+            f"Amazon page {page + 1}: "
+            f"scanned={len(jobs)} kept={kept}"
+        )
+
+        time.sleep(0.4)
+
+    # Deduplicate by external_job_id
+    deduped = {j["external_job_id"]: j for j in results}
+    print("Amazon jobs:", len(deduped))
+    return list(deduped.values())
 
 
 if __name__ == "__main__":
-    jobs = scrape(max_pages=10)
+    jobs = scrape(max_pages=5)
+    print("Total Amazon jobs:", len(jobs))
+    if jobs:
+        print("Sample:", jobs[0])
