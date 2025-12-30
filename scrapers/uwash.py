@@ -1,10 +1,10 @@
 import re
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 
-BASE_URL = "https://wd5.myworkdaysite.com/wday/cxs/uw/uwhires"
+BASE_URL = "https://wd5.myworkdaysite.com"
 API_URL = "https://wd5.myworkdaysite.com/wday/cxs/uw/uwhires/jobs"
 
 REJECT_TITLE = re.compile(
@@ -16,23 +16,33 @@ REJECT_TITLE = re.compile(
 )
 
 POSTED_DAYS_RE = re.compile(r"Posted\s+(\d+)\s+Days?\s+Ago", re.IGNORECASE)
+POSTING_DATE_RE = re.compile(r"Posting Date:\s*(\d{2}/\d{2}/\d{4})")
 
 
-def _parse_posted_at(posted_on: str):
+def _parse_posted_at(posted_on: str, bullet_fields: List[str]):
     if not posted_on:
         return None
 
+    now = datetime.now(timezone.utc)
     text = posted_on.strip().lower()
 
     if text == "posted today":
-        return datetime.utcnow()
+        return now
 
     if text == "posted yesterday":
-        return datetime.utcnow() - timedelta(days=1)
+        return now - timedelta(days=1)
 
     m = POSTED_DAYS_RE.search(posted_on)
     if m:
-        return datetime.utcnow() - timedelta(days=int(m.group(1)))
+        return now - timedelta(days=int(m.group(1)))
+
+    # Handle "Posted 30+ Days Ago" via Posting Date
+    for field in bullet_fields or []:
+        m2 = POSTING_DATE_RE.search(field)
+        if m2:
+            return datetime.strptime(
+                m2.group(1), "%m/%d/%Y"
+            ).replace(tzinfo=timezone.utc)
 
     return None
 
@@ -40,12 +50,6 @@ def _parse_posted_at(posted_on: str):
 def _normalize_locations(loc_text: str) -> List[str]:
     if not loc_text:
         return []
-
-    if "locations" in loc_text.lower():
-        return [loc_text.strip()]
-
-    if "-" in loc_text:
-        return [loc_text.split("-", 1)[-1].strip()]
 
     return [loc_text.strip()]
 
@@ -57,9 +61,7 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
     for page in range(max_pages):
         payload = {
             "appliedFacets": {
-                "jobFamily": [
-                    "5e955a616fd51001a3042cc61f7e0000"  # Information Technology/Computing
-                ]
+                "jobFamily": ["5e955a616fd51001a3042cc61f7e0000"]
             },
             "limit": page_size,
             "offset": offset,
@@ -69,8 +71,8 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
         try:
             r = requests.post(API_URL, json=payload, timeout=30)
             r.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            print(f"UW page {page + 1}: Request failed - {e}")
+        except requests.RequestException as e:
+            print(f"UW page {page + 1}: request failed - {e}")
             break
 
         data = r.json()
@@ -85,18 +87,8 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
             if REJECT_TITLE.search(title):
                 continue
 
-            bullet = job.get("bulletFields") or []
-            if not bullet:
-                # Use a different field as fallback for external_job_id
-                external_path = job.get("externalPath", "")
-                if external_path:
-                    # Extract job ID from path like "/job/Software-Engineer/JR12345"
-                    external_job_id = external_path.split("/")[-1] if "/" in external_path else external_path
-                else:
-                    # Fallback to title-based ID
-                    external_job_id = title.replace(" ", "-")[:50]
-            else:
-                external_job_id = bullet[0]
+            bullet_fields = job.get("bulletFields") or []
+            external_job_id = bullet_fields[0]
 
             jobs.append({
                 "company": "University of Washington",
@@ -104,7 +96,7 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
                 "job_id": external_job_id,
                 "title": title,
                 "posting_url": BASE_URL + job.get("externalPath", ""),
-                "posted_at": _parse_posted_at(job.get("postedOn")),
+                "posted_at": _parse_posted_at(job.get("postedOn"), bullet_fields),
                 "locations": _normalize_locations(job.get("locationsText")),
             })
 
@@ -114,8 +106,7 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
 
         offset += page_size
         time.sleep(0.4)
-    
-    # Final dedupe by external_job_id
+
     deduped = {j["external_job_id"]: j for j in jobs}
     print("UW jobs:", len(deduped))
 
