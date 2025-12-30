@@ -9,7 +9,7 @@ API_URL = "https://salesforce.wd12.myworkdayjobs.com/wday/cxs/salesforce/Externa
 
 # Exclude leadership roles (senior / sr allowed)
 REJECT_TITLE = re.compile(
-    r"\b(manager|principal|lead|architect)\b",
+    r"\b(manager|principal|lead|architect|staff)\b",
     re.IGNORECASE,
 )
 
