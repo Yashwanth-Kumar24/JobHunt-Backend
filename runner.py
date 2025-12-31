@@ -6,7 +6,7 @@ from scrapers.salesforce import scrape as scrape_salesforce
 from scrapers.fidelity import scrape as scrape_fidelity
 from scrapers.cognizant import scrape as scrape_cognizant
 from scrapers.uwash import scrape as scrape_uwash
-from scrapers.uwash import scrape as scrape_doordash
+from scrapers.doordash import scrape as scrape_doordash
 from db_writer import save_jobs
 
 DB_URL = os.environ.get("SUPABASE_DB_URL")

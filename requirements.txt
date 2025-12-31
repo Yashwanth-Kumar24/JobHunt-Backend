@@ -1,4 +1,13 @@
+# Core HTTP + parsing
 requests>=2.31.0
-psycopg2-binary>=2.9.9
-cloudscraper>=1.2.71
 beautifulsoup4>=4.12.3
+cloudscraper>=1.2.71
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Browser automation (DoorDash)
+playwright>=1.42.0
+
+# Optional but recommended
+lxml>=5.1.0
