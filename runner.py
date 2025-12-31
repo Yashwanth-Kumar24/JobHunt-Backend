@@ -7,6 +7,7 @@ from scrapers.fidelity import scrape as scrape_fidelity
 from scrapers.cognizant import scrape as scrape_cognizant
 from scrapers.uwash import scrape as scrape_uwash
 from scrapers.doordash import scrape as scrape_doordash
+from scrapers.ssc import scrape as scrape_ssc
 from db_writer import save_jobs
 
 DB_URL = os.environ.get("SUPABASE_DB_URL")
@@ -22,6 +23,7 @@ jobs.extend(scrape_fidelity(max_pages=5))
 jobs.extend(scrape_cognizant(max_pages=5))
 jobs.extend(scrape_uwash(max_pages=5))
 jobs.extend(scrape_doordash(max_pages=1))
+jobs.extend(scrape_ssc(max_pages=3))
 print("Total Jobs found: ",len(jobs))
 inserted = save_jobs(jobs, DB_URL)
 print("Rows affected: ",inserted)
