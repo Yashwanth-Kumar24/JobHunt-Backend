@@ -8,11 +8,10 @@ BASE_URL = "https://synechron.wd1.myworkdayjobs.com/en-US/SynechronCareers"
 API_URL = "https://synechron.wd1.myworkdayjobs.com/wday/cxs/synechron/SynechronCareers/jobs"
 
 REJECT_TITLE = re.compile(
-    r"\b("
-    r"director|principal|head|vice\s*president|president|expert"
-    r"chief|squad\s*leader|lead|master|owner"
-    r")\b",
-    re.IGNORECASE,
+    r"(?i)\b("
+    r"director|principal|head|vice\s*president|president|"
+    r"expert|chief|squad\s*leader|lead|master|owner|architect"
+    r")\b"
 )
 
 POSTED_DAYS_RE = re.compile(r"Posted\s+(\d+)\s+Days?\s+Ago", re.IGNORECASE)
