@@ -17,8 +17,8 @@ if not DB_URL:
     raise RuntimeError("SUPABASE_DB_URL not set")
     
 jobs = []
-jobs.extend(scrape_amazon(max_pages=5))
-jobs.extend(scrape_microsoft(max_pages=5))
+jobs.extend(scrape_amazon(max_pages=15))
+jobs.extend(scrape_microsoft(max_pages=15))
 jobs.extend(scrape_salesforce(max_pages=5))
 jobs.extend(scrape_fidelity(max_pages=5))
 jobs.extend(scrape_cognizant(max_pages=5))

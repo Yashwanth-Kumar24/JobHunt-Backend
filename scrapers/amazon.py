@@ -80,7 +80,7 @@ def _fetch_page(offset: int, limit: int) -> Dict:
     params = {
         "offset": offset,
         "result_limit": limit,
-        "sort": "relevant",
+        "sort": "recent",
         "category[]": "software-development",
         "country[]": "USA",
     }

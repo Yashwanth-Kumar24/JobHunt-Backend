@@ -66,7 +66,7 @@ def scrape(max_pages: int = 20) -> list[dict]:
             "hl": "en",
             "query": "software engineer",
             "location": "United States",
-            "sort_by": "relevance",
+            "sort_by": "timestamp",
             "start": start,
         }
 
@@ -105,4 +105,4 @@ def scrape(max_pages: int = 20) -> list[dict]:
 
 
 if __name__ == "__main__":
-    jobs = scrape(max_pages=10)
+    jobs = scrape(max_pages=5)
