@@ -94,7 +94,7 @@ def scrape(max_pages: int = 5) -> List[Dict]:
                 "external_job_id": job_id,
                 "job_id": job_id,
                 "title": title,
-                "posting_url": job.get("applyUrl"),
+                "posting_url": f"https://careers.sig.com/job/{job_id}",
                 "posted_at": _parse_posted_at(posted_date),
                 "locations": [location] if location else [],
             })
