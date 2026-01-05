@@ -11,6 +11,7 @@ from scrapers.ssc import scrape as scrape_ssc
 from scrapers.synechron import scrape as scrape_synechron
 from scrapers.goldmansachs import scrape as scrape_goldmansachs
 from scrapers.pennstate import scrape as scrape_pennstate
+from scrapers.geico import scrape as scrape_geico
 from db_writer import save_jobs
 
 DB_URL = os.environ.get("SUPABASE_DB_URL")
@@ -30,6 +31,7 @@ jobs.extend(scrape_ssc(max_pages=3))
 jobs.extend(scrape_synechron(max_pages=2))
 jobs.extend(scrape_goldmansachs(max_pages=5))
 jobs.extend(scrape_pennstate(max_pages=5))
+jobs.extend(scrape_geico(max_pages=5))
 print("Total Jobs found: ",len(jobs))
 inserted = save_jobs(jobs, DB_URL)
 print("Rows affected: ",inserted)
