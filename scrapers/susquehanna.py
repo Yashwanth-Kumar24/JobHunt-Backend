@@ -84,7 +84,7 @@ def scrape(max_pages: int = 5) -> List[Dict]:
             job_id = job.get("jobId")
             title = job.get("title")
             location = job.get("location")
-            posted_date = job.get("postedDate")
+            posted_date = job.get("dateCreated")
 
             if not job_id or not title:
                 continue
