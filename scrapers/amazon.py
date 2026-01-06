@@ -9,7 +9,7 @@ AMAZON_SEARCH_URL = "https://www.amazon.jobs/en/search.json"
 # Reject only senior / leadership roles
 REJECT_TITLE = re.compile(
     r"\b("
-    r"senior|sr\.?|principal|lead|manager|architect|staff|SDM"
+    r"senior|sr\.?|principal|lead|manager|architect|staff|sdm|director"
     r")\b",
     re.IGNORECASE,
 )
