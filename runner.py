@@ -17,6 +17,7 @@ from scrapers.cisco import scrape as scrape_cisco
 from scrapers.thomsonreuters import scrape as scrape_thomsonreuters
 from scrapers.susquehanna import scrape as scrape_susquehanna
 from db_writer import save_jobs
+from notify_telegram import notify_telegram
 
 DB_URL = os.environ.get("SUPABASE_DB_URL")
 
