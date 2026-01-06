@@ -10,7 +10,7 @@ API_URL = "https://fmr.wd1.myworkdayjobs.com/wday/cxs/fmr/FidelityCareers/jobs"
 REJECT_TITLE = re.compile(
     r"\b("
     r"director|principal|manager|head|lead|team\s*leader|"
-    r"vice\s*president|president|squad\s*leader"
+    r"vice\s*president|president|squad\s*leader|leader|"
     r")\b",
     re.IGNORECASE,
 )
