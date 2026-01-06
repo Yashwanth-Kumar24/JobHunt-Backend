@@ -69,6 +69,17 @@ def save_jobs(jobs, db_url, run_started_at):
 
             execute_values(cur, sql, rows, page_size=200)
 
+            # Fill posted_at ONLY for jobs first seen in THIS run
+            cur.execute(
+                """
+                update jobs
+                set posted_at = first_seen_at
+                where posted_at is null
+                  and first_seen_at = %s;
+                """,
+                (run_started_at,),
+            )
+
             # Fetch only newly inserted jobs
             cur.execute(
                 """
