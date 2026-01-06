@@ -16,15 +16,17 @@ from scrapers.geico import scrape as scrape_geico
 from scrapers.cisco import scrape as scrape_cisco
 from scrapers.thomsonreuters import scrape as scrape_thomsonreuters
 from scrapers.susquehanna import scrape as scrape_susquehanna
+
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
 
-DB_URL = os.environ.get("SUPABASE_DB_URL")
 
+DB_URL = os.environ.get("SUPABASE_DB_URL")
 if not DB_URL:
     raise RuntimeError("SUPABASE_DB_URL not set")
 
 run_started_at = datetime.now(timezone.utc)
+
 jobs = []
 jobs.extend(scrape_amazon(max_pages=5))
 jobs.extend(scrape_microsoft(max_pages=5))
@@ -41,8 +43,12 @@ jobs.extend(scrape_geico(max_pages=5))
 jobs.extend(scrape_cisco(max_pages=5))
 jobs.extend(scrape_thomsonreuters(max_pages=5))
 jobs.extend(scrape_susquehanna(max_pages=5))
-print("Total Jobs found: ",len(jobs))
+
+print("Total jobs scraped:", len(jobs))
+
 result = save_jobs(jobs, DB_URL, run_started_at)
+
 print("New jobs added:", result["inserted"])
+
 if result["inserted"] > 0:
     notify_telegram(result["new_jobs"])

@@ -38,7 +38,8 @@ def save_jobs(jobs, db_url, run_started_at):
                     j.get("posting_url"),
                     j.get("posted_at"),
                     json.dumps(j.get("locations") or []),
-                    run_started_at,
+                    run_started_at,  # first_seen_at
+                    run_started_at,  # last_seen_at
                 )
 
             rows = list(unique_rows.values())
@@ -52,6 +53,7 @@ def save_jobs(jobs, db_url, run_started_at):
                 posting_url,
                 posted_at,
                 locations,
+                first_seen_at,
                 last_seen_at
             )
             values %s
@@ -61,12 +63,13 @@ def save_jobs(jobs, db_url, run_started_at):
                 title = excluded.title,
                 posting_url = excluded.posting_url,
                 posted_at = excluded.posted_at,
-                locations = excluded.locations;
+                locations = excluded.locations,
+                last_seen_at = excluded.last_seen_at;
             """
 
             execute_values(cur, sql, rows, page_size=200)
-            conn.commit()
 
+            # Fetch only newly inserted jobs
             cur.execute(
                 """
                 select
@@ -77,17 +80,15 @@ def save_jobs(jobs, db_url, run_started_at):
                     j.locations
                 from jobs j
                 join companies c on c.id = j.company_id
-                where j.last_seen_at = %s
-                order by j.posted_at desc;
+                where j.first_seen_at = %s
+                order by j.first_seen_at asc;
                 """,
                 (run_started_at,),
             )
 
             new_jobs = []
-
             for r in cur.fetchall():
                 loc = r[4]
-
                 if isinstance(loc, str):
                     loc = json.loads(loc)
                 elif loc is None:
@@ -104,6 +105,8 @@ def save_jobs(jobs, db_url, run_started_at):
                         "locations": loc,
                     }
                 )
+
+            conn.commit()
 
             return {
                 "inserted": len(new_jobs),
