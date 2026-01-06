@@ -35,7 +35,10 @@ def notify_telegram(jobs: List[Dict], max_jobs: int = 15):
         lines.append(f"{title}")
         lines.append(f"{location_text}")
         lines.append(f"{link}\n")
-
+    
+    lines.append("🚀 Explore all jobs on Job Hunt\n")
+    lines.append("https://job-hunters-rho.vercel.app\n")
+    
     payload = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": "\n".join(lines),
