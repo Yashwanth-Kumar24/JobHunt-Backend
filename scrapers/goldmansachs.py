@@ -94,7 +94,7 @@ def scrape(max_pages: int = 20, page_size: int = 25) -> List[Dict]:
             posted_date = job.get("PostedDate", "")
             
             # Construct job URL (Goldman Sachs uses Oracle Cloud format)
-            job_url = f"https://www.goldmansachs.com/careers/find-a-role/role-detail.html?id={job_id}"
+            job_url = f"https://higher.gs.com/roles/{job_id}"
 
             jobs.append({
                 "company": "Goldman Sachs",
