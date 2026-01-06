@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 
 from scrapers.amazon import scrape as scrape_amazon
 from scrapers.microsoft import scrape as scrape_microsoft
@@ -21,7 +22,8 @@ DB_URL = os.environ.get("SUPABASE_DB_URL")
 
 if not DB_URL:
     raise RuntimeError("SUPABASE_DB_URL not set")
-    
+
+run_started_at = datetime.now(timezone.utc)
 jobs = []
 jobs.extend(scrape_amazon(max_pages=5))
 jobs.extend(scrape_microsoft(max_pages=5))
@@ -39,5 +41,7 @@ jobs.extend(scrape_cisco(max_pages=5))
 jobs.extend(scrape_thomsonreuters(max_pages=5))
 jobs.extend(scrape_susquehanna(max_pages=5))
 print("Total Jobs found: ",len(jobs))
-inserted = save_jobs(jobs, DB_URL)
-print("Rows affected: ",inserted)
+result = save_jobs(jobs, DB_URL, run_started_at)
+print("New jobs added:", result["inserted"])
+if result["inserted"] > 0:
+    notify_telegram(result["new_jobs"])

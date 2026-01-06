@@ -9,13 +9,9 @@ def _get_company_ids(cur) -> dict:
     return {name: cid for cid, name in cur.fetchall()}
 
 
-def save_jobs(
-    jobs: List[Dict],
-    db_url: str,
-    update_last_seen: bool = True,
-) -> int:
+def save_jobs(jobs, db_url, run_started_at):
     if not jobs:
-        return 0
+        return {"inserted": 0, "new_jobs": []}
 
     with psycopg2.connect(
         db_url,
@@ -25,23 +21,13 @@ def save_jobs(
         with conn.cursor() as cur:
             company_ids = _get_company_ids(cur)
 
-            # --------------------------------------------------
-            # Deduplicate rows by (company_id, external_job_id)
-            # --------------------------------------------------
             unique_rows = {}
 
             for j in jobs:
-                company = j.get("company")
-                if company not in company_ids:
-                    raise RuntimeError(f"Company not found in DB: {company}")
+                company_id = company_ids[j["company"]]
+                external_job_id = str(j["external_job_id"])
 
-                company_id = company_ids[company]
-                external_job_id = str(j.get("external_job_id"))
-
-                key = (company_id, external_job_id)
-
-                # Last write wins (latest scrape data preserved)
-                unique_rows[key] = (
+                unique_rows[(company_id, external_job_id)] = (
                     company_id,
                     external_job_id,
                     j.get("job_id"),
@@ -49,61 +35,64 @@ def save_jobs(
                     j.get("posting_url"),
                     j.get("posted_at"),
                     json.dumps(j.get("locations") or []),
+                    run_started_at,
                 )
 
             rows = list(unique_rows.values())
 
-            if not rows:
-                return 0
-
-            print(f"DB Writer: deduped {len(jobs)} → {len(rows)} rows")
-
-            # --------------------------------------------------
-            # Upsert SQL
-            # --------------------------------------------------
-            if update_last_seen:
-                sql = """
-                insert into jobs (
-                    company_id,
-                    external_job_id,
-                    job_id,
-                    title,
-                    posting_url,
-                    posted_at,
-                    locations
-                )
-                values %s
-                on conflict (company_id, external_job_id)
-                do update set
-                    job_id = excluded.job_id,
-                    title = excluded.title,
-                    posting_url = excluded.posting_url,
-                    posted_at = excluded.posted_at,
-                    locations = excluded.locations,
-                    last_seen_at = now();
-                """
-            else:
-                sql = """
-                insert into jobs (
-                    company_id,
-                    external_job_id,
-                    job_id,
-                    title,
-                    posting_url,
-                    posted_at,
-                    locations
-                )
-                values %s
-                on conflict (company_id, external_job_id)
-                do update set
-                    job_id = excluded.job_id,
-                    title = excluded.title,
-                    posting_url = excluded.posting_url,
-                    posted_at = excluded.posted_at,
-                    locations = excluded.locations;
-                """
+            sql = """
+            insert into jobs (
+                company_id,
+                external_job_id,
+                job_id,
+                title,
+                posting_url,
+                posted_at,
+                locations,
+                last_seen_at
+            )
+            values %s
+            on conflict (company_id, external_job_id)
+            do update set
+                job_id = excluded.job_id,
+                title = excluded.title,
+                posting_url = excluded.posting_url,
+                posted_at = excluded.posted_at,
+                locations = excluded.locations;
+            """
 
             execute_values(cur, sql, rows, page_size=200)
+
+            # Fetch newly inserted rows
+            cur.execute(
+                """
+                select
+                    c.name as company,
+                    j.title,
+                    j.posting_url,
+                    j.posted_at,
+                    j.locations
+                from jobs j
+                join companies c on c.id = j.company_id
+                where j.last_seen_at = %s;
+                """,
+                (run_started_at,),
+            )
+
+            new_jobs = [
+                {
+                    "company": r[0],
+                    "title": r[1],
+                    "posting_url": r[2],
+                    "posted_at": r[3],
+                    "locations": json.loads(r[4]),
+                }
+                for r in cur.fetchall()
+            ]
+
             conn.commit()
 
-            return cur.rowcount
+            return {
+                "inserted": len(new_jobs),
+                "new_jobs": new_jobs,
+            }
