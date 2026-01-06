@@ -29,23 +29,17 @@ def save_jobs(jobs, db_url, run_started_at):
                 company_id = company_ids[company]
                 external_job_id = str(j.get("external_job_id"))
 
-                
-                insert_posted_at = (
-                    j.get("posted_at")
-                    if j.get("posted_at") is not None
-                    else run_started_at
-                )
-
+                # 🔒 CRITICAL: pass RAW posted_at from API (may be NULL)
                 unique_rows[(company_id, external_job_id)] = (
                     company_id,
                     external_job_id,
                     j.get("job_id"),
                     j.get("title"),
                     j.get("posting_url"),
-                    insert_posted_at,          # used ONLY on insert
+                    j.get("posted_at"),                 # raw value only
                     json.dumps(j.get("locations") or []),
-                    run_started_at,            # first_seen_at
-                    run_started_at,            # last_seen_at
+                    run_started_at,                     # first_seen_at
+                    run_started_at,                     # last_seen_at
                 )
 
             rows = list(unique_rows.values())
@@ -70,13 +64,18 @@ def save_jobs(jobs, db_url, run_started_at):
                 posting_url = excluded.posting_url,
                 locations = excluded.locations,
                 last_seen_at = excluded.last_seen_at,
-                -- posted_at updated ONLY if API provides a value
-                posted_at = COALESCE(excluded.posted_at, jobs.posted_at);
+                -- posted_at updated ONLY if DB is NULL and API provides value
+                posted_at = CASE
+                    WHEN jobs.posted_at IS NULL
+                         AND excluded.posted_at IS NOT NULL
+                    THEN excluded.posted_at
+                    ELSE jobs.posted_at
+                END;
             """
 
             execute_values(cur, sql, rows, page_size=200)
 
-            # Notifications: strictly new inserts
+            # 🔔 Fetch ONLY newly inserted jobs (notifications)
             cur.execute(
                 """
                 select
