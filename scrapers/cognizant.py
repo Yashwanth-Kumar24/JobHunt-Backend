@@ -12,7 +12,7 @@ SEARCH_URL = "https://careers.cognizant.com/global-en/jobs/"
 REJECT_TITLE = re.compile(
     r"\b("
     r"director|principal|manager|lead|team leader|specialist"
-    r"vice president|president|squad leader|architect"
+    r"vice president|president|squad leader|architect|customer service"
     r")\b",
     re.IGNORECASE,
 )
