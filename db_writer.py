@@ -30,16 +30,13 @@ def save_jobs(jobs, db_url, run_started_at):
                 company_id = company_ids[company]
                 external_job_id = str(j.get("external_job_id"))
 
-                # ✅ Use first_seen_at as posted_at fallback
-                effective_posted_at = j.get("posted_at") or run_started_at
-
                 unique_rows[(company_id, external_job_id)] = (
                     company_id,
                     external_job_id,
                     j.get("job_id"),
                     j.get("title"),
                     j.get("posting_url"),
-                    effective_posted_at,
+                    j.get("posted_at"),
                     json.dumps(j.get("locations") or []),
                     run_started_at,  # first_seen_at
                     run_started_at,  # last_seen_at
@@ -65,14 +62,14 @@ def save_jobs(jobs, db_url, run_started_at):
                 job_id = excluded.job_id,
                 title = excluded.title,
                 posting_url = excluded.posting_url,
+                posted_at = excluded.posted_at,
                 locations = excluded.locations,
-                posted_at = COALESCE(excluded.posted_at, jobs.posted_at),
                 last_seen_at = excluded.last_seen_at;
             """
 
             execute_values(cur, sql, rows, page_size=200)
 
-            # Fetch only newly inserted jobs (for notifications)
+            # Fetch only newly inserted jobs
             cur.execute(
                 """
                 select
