@@ -1,7 +1,6 @@
 import psycopg2
 import json
 from psycopg2.extras import execute_values
-from typing import List, Dict
 
 
 def _get_company_ids(cur) -> dict:
@@ -24,8 +23,12 @@ def save_jobs(jobs, db_url, run_started_at):
             unique_rows = {}
 
             for j in jobs:
-                company_id = company_ids[j["company"]]
-                external_job_id = str(j["external_job_id"])
+                company = j.get("company")
+                if company not in company_ids:
+                    raise RuntimeError(f"Company not found in DB: {company}")
+
+                company_id = company_ids[company]
+                external_job_id = str(j.get("external_job_id"))
 
                 unique_rows[(company_id, external_job_id)] = (
                     company_id,
@@ -62,8 +65,8 @@ def save_jobs(jobs, db_url, run_started_at):
             """
 
             execute_values(cur, sql, rows, page_size=200)
+            conn.commit()
 
-            # Fetch newly inserted rows
             cur.execute(
                 """
                 select
@@ -74,23 +77,33 @@ def save_jobs(jobs, db_url, run_started_at):
                     j.locations
                 from jobs j
                 join companies c on c.id = j.company_id
-                where j.last_seen_at = %s;
+                where j.last_seen_at = %s
+                order by j.posted_at desc;
                 """,
                 (run_started_at,),
             )
 
-            new_jobs = [
-                {
-                    "company": r[0],
-                    "title": r[1],
-                    "posting_url": r[2],
-                    "posted_at": r[3],
-                    "locations": json.loads(r[4]),
-                }
-                for r in cur.fetchall()
-            ]
+            new_jobs = []
 
-            conn.commit()
+            for r in cur.fetchall():
+                loc = r[4]
+
+                if isinstance(loc, str):
+                    loc = json.loads(loc)
+                elif loc is None:
+                    loc = []
+                elif not isinstance(loc, list):
+                    loc = [str(loc)]
+
+                new_jobs.append(
+                    {
+                        "company": r[0],
+                        "title": r[1],
+                        "posting_url": r[2],
+                        "posted_at": r[3],
+                        "locations": loc,
+                    }
+                )
 
             return {
                 "inserted": len(new_jobs),
