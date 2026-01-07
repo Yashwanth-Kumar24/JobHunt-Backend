@@ -16,6 +16,7 @@ from scrapers.geico import scrape as scrape_geico
 from scrapers.cisco import scrape as scrape_cisco
 from scrapers.thomsonreuters import scrape as scrape_thomsonreuters
 from scrapers.susquehanna import scrape as scrape_susquehanna
+from scrapers.snapinc import scrape as scrape_snapinc
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -43,6 +44,7 @@ jobs.extend(scrape_geico(max_pages=5))
 jobs.extend(scrape_cisco(max_pages=5))
 jobs.extend(scrape_thomsonreuters(max_pages=5))
 jobs.extend(scrape_susquehanna(max_pages=5))
+jobs.extend(scrape_snapinc(max_pages=5))
 
 print("Total jobs scraped:", len(jobs))
 
