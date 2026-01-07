@@ -62,7 +62,6 @@ def save_jobs(jobs, db_url, run_started_at):
                 job_id = excluded.job_id,
                 title = excluded.title,
                 posting_url = excluded.posting_url,
-                posted_at = excluded.posted_at,
                 locations = excluded.locations,
                 last_seen_at = excluded.last_seen_at;
             """
