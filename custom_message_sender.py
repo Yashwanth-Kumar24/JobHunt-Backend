@@ -26,33 +26,40 @@ def send_telegram_message(message: str):
     response = requests.post(url, json=payload, timeout=15)
     response.raise_for_status()
 
-
 message = """
 👋 Hello everyone!
 
 🔍 <b>Job Hunt Portal</b>  
 https://job-hunters-rho.vercel.app
 
-📌 <b>Usage Guide</b>
-
-• <b>Companies</b> page lists all tracked companies  
-• <b>Latest Jobs</b> shows openings from the last 7 days  
-• Filter by <b>date, title, location, job ID, or company</b>  
-• Sort jobs by <b>posted date</b> or <b>company name</b>  
-• Easy pagination with selectable rows (10, 20, 30, 50, 100)
-
-🚀 New jobs are added every <b>4 hours</b>  
-📅 Check back daily to stay updated
-
-💬 <b>Feedback & Requests</b>  
-If you notice issues, have suggestions, or want a company added, feel free to reach out to the admin.
-
-☕ <b>Support the Project (Optional)</b>  
-This portal is maintained voluntarily.  
-Tips and support are always appreciated ❤️  
-If you’d like to contribute or know more, drop a message to the admin.
-
-Happy job hunting and best of luck! 🍀
+🚀 New jobs are added every <b>2 Hours</b> during business hours.
 """
+# message = """
+# 👋 Hello everyone!
+
+# 🔍 <b>Job Hunt Portal</b>  
+# https://job-hunters-rho.vercel.app
+
+# 📌 <b>Usage Guide</b>
+
+# • <b>Companies</b> page lists all tracked companies  
+# • <b>Latest Jobs</b> shows openings from the last 7 days  
+# • Filter by <b>date, title, location, job ID, or company</b>  
+# • Sort jobs by <b>posted date</b> or <b>company name</b>  
+# • Easy pagination with selectable rows (10, 20, 30, 50, 100)
+
+# 🚀 New jobs are added every <b>4 hours</b>  
+# 📅 Check back daily to stay updated
+
+# 💬 <b>Feedback & Requests</b>  
+# If you notice issues, have suggestions, or want a company added, feel free to reach out to the admin.
+
+# ☕ <b>Support the Project (Optional)</b>  
+# This portal is maintained voluntarily.  
+# Tips and support are always appreciated ❤️  
+# If you’d like to contribute or know more, drop a message to the admin.
+
+# Happy job hunting and best of luck! 🍀
+# """
 
 send_telegram_message(message)

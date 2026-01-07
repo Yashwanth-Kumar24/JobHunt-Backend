@@ -1,7 +1,7 @@
 import re
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict
 
 BASE_URL = "https://fmr.wd1.myworkdayjobs.com/FidelityCareers"
@@ -10,29 +10,29 @@ API_URL = "https://fmr.wd1.myworkdayjobs.com/wday/cxs/fmr/FidelityCareers/jobs"
 REJECT_TITLE = re.compile(
     r"\b("
     r"director|principal|manager|head|lead|team\s*leader|"
-    r"vice\s*president|president|squad\s*leader|leader|"
+    r"vice\s*president|president|squad\s*leader|leader"
     r")\b",
     re.IGNORECASE,
 )
 
 POSTED_DAYS_RE = re.compile(r"Posted\s+(\d+)\s+Days?\s+Ago", re.IGNORECASE)
 
-
 def _parse_posted_at(posted_on: str):
     if not posted_on:
         return None
 
+    now = datetime.now(timezone.utc)
     text = posted_on.strip().lower()
 
     if text == "posted today":
-        return datetime.utcnow()
+        return now
 
     if text == "posted yesterday":
-        return datetime.utcnow() - timedelta(days=1)
+        return now - timedelta(days=1)
 
     m = POSTED_DAYS_RE.search(posted_on)
     if m:
-        return datetime.utcnow() - timedelta(days=int(m.group(1)))
+        return now - timedelta(days=int(m.group(1)))
 
     return None
 
@@ -118,3 +118,5 @@ if __name__ == "__main__":
     print("Fidelity jobs:", len(res))
     if res:
         print("Sample:", res[0])
+    for x in res:
+        print(x)
