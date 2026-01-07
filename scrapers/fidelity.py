@@ -81,6 +81,8 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
 
         for job in postings:
             title = job.get("title") or ""
+            if not title:
+                continue
             if REJECT_TITLE.search(title):
                 continue
 
@@ -89,7 +91,7 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
                 continue
 
             external_job_id = bullet[0]
-
+            
             jobs.append({
                 "company": "Fidelity Investments",
                 "external_job_id": external_job_id,
@@ -98,8 +100,8 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
                 "posting_url": BASE_URL + job.get("externalPath", ""),
                 "posted_at": _parse_posted_at(job.get("postedOn")),
                 "locations": _normalize_locations(job.get("locationsText")),
+                "page":page
             })
-
             kept += 1
 
         print(f"Fidelity page {page + 1}: scanned={len(postings)} kept={kept}")
