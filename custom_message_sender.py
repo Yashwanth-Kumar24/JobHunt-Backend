@@ -27,12 +27,19 @@ def send_telegram_message(message: str):
     response.raise_for_status()
 
 message = """
-👋 Hello everyone!
+👋 <b>Hello everyone!</b>
 
-🔍 <b>Job Hunt Portal</b>  
-https://job-hunters-rho.vercel.app
+🚀 <b>Job Hunt Portal</b>  
+🔗 https://job-hunters-rho.vercel.app
 
-🚀 New jobs are added every <b>2 Hours</b> during business hours.
+🆕 <b>New companies added</b>
+• Snap Inc.  
+• Apple  
+• Walmart  
+
+📌 Explore the latest openings and stay ahead in your job search.
+
+💡 <i>Tip: Check back often, new jobs are added regularly.</i>
 """
 # message = """
 # 👋 Hello everyone!
