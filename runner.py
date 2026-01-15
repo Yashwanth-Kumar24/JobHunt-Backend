@@ -20,6 +20,7 @@ from scrapers.snapinc import scrape as scrape_snapinc
 from scrapers.apple import scrape as scrape_apple
 from scrapers.walmart import scrape as scrape_walmart
 from scrapers.lilly import scrape as scrape_lilly
+from scrapers.nvidia import scrape as scrape_nvidia
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -51,6 +52,7 @@ jobs.extend(scrape_snapinc(max_pages=5))
 jobs.extend(scrape_apple(max_pages=5))
 jobs.extend(scrape_walmart(max_pages=5))
 jobs.extend(scrape_lilly(max_pages=5))
+jobs.extend(scrape_nvidia(max_pages=5))
 
 print("Total jobs scraped:", len(jobs))
 
