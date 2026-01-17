@@ -93,7 +93,7 @@ def scrape(page_size: int = 1000) -> List[Dict]:
             "external_job_id": external_job_id,
             "job_id": external_job_id,
             "title": title,
-            "posting_url": job.get("applyUrl"),
+            "posting_url": f"{REFERER}{external_job_id}",
             "posted_at": _parse_posted_at(job.get("createdOn")),
             "locations": _normalize_locations(job),
         })
