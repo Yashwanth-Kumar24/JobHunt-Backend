@@ -64,5 +64,5 @@ result = save_jobs(jobs, DB_URL, run_started_at)
 
 print("New jobs added:", result["inserted"])
 
-# if result["inserted"] > 0:
-#     notify_telegram(result["new_jobs"])
+if result["inserted"] > 0:
+    notify_telegram(result["new_jobs"])
