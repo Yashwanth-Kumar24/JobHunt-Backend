@@ -148,9 +148,7 @@ def scrape(max_pages: int = 10, page_size: int = 14) -> List[Dict]:
 
 
 if __name__ == "__main__":
-    res = scrape(max_pages=20)
+    res = scrape(max_pages=1)
     print("Oracle jobs:", len(res))
     if res:
         print("Sample:", res[0])
-    for i in range(30,):
-        print(res[i])
