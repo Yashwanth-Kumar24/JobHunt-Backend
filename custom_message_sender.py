@@ -33,9 +33,7 @@ message = """
 🔗 https://job-hunters-rho.vercel.app
 
 🆕 <b>New companies added</b>
-• Snap Inc.  
-• Apple  
-• Walmart  
+• Oracle 
 
 📌 Explore the latest openings and stay ahead in your job search.
 
