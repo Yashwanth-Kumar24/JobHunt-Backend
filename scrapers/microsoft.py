@@ -18,7 +18,7 @@ _REJECT_TITLE = re.compile(
     re.IGNORECASE,
 )
 
-_ALLOW_PREFIX = re.compile(r"software engineer(ing)", re.IGNORECASE)
+_ALLOW_PREFIX = re.compile(r"\bsoftware engineer\b", re.IGNORECASE)
 
 
 def _session():
