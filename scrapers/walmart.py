@@ -59,21 +59,23 @@ def _normalize_locations(loc_text: str) -> List[str]:
     return [loc_text.strip()]
 
 
-def _get_session_headers() -> dict:
+def _get_session_headers():
     """Visit the careers page to obtain CSRF token cookie, then return headers with it."""
     session = requests.Session()
     try:
-        session.get(CAREERS_PAGE, headers={
+        resp = session.get(CAREERS_PAGE, headers={
             "User-Agent": HEADERS["User-Agent"],
-            "Accept": "text/html",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
         }, timeout=30)
         csrf_token = session.cookies.get("CALYPSO_CSRF_TOKEN")
+        print(f"Walmart session init: status={resp.status_code}, csrf={'found' if csrf_token else 'missing'}")
         if csrf_token:
             h = dict(HEADERS)
             h["x-calypso-csrf-token"] = csrf_token
             return h, session
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Walmart session init failed: {e}")
     return HEADERS, session
 
 
