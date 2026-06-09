@@ -3,7 +3,7 @@ import re
 import cloudscraper
 from bs4 import BeautifulSoup
 from typing import List, Dict
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 BASE_URL = "https://careers.cognizant.com"
 SEARCH_URL = "https://careers.cognizant.com/global-en/jobs/"
@@ -11,11 +11,29 @@ SEARCH_URL = "https://careers.cognizant.com/global-en/jobs/"
 # Reject only clearly senior / leadership roles
 REJECT_TITLE = re.compile(
     r"\b("
-    r"director|principal|manager|lead|team leader|specialist"
-    r"vice president|president|squad leader|architect|customer service"
+    r"director|principal|manager|lead|team\s+leader|"
+    r"vice\s+president|president|squad\s+leader|architect|customer\s+service"
     r")\b",
     re.IGNORECASE,
 )
+
+POSTED_DATE_RE = re.compile(r"(\d{1,2})\s+(\w+)\s+(\d{4})")
+
+
+def _parse_posted_at(text: str):
+    if not text:
+        return None
+    try:
+        return datetime.strptime(text.strip(), "%d %b %Y").replace(tzinfo=timezone.utc)
+    except Exception:
+        pass
+    m = POSTED_DATE_RE.search(text)
+    if m:
+        try:
+            return datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%d %B %Y").replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+    return None
 
 
 def _normalize_location(text: str) -> List[str]:
@@ -96,6 +114,7 @@ def scrape(max_pages: int = 5, page_size: int = 10) -> List[Dict]:
 
             meta_items = card.select("ul.job-meta li")
             location_text = meta_items[0].get_text(strip=True) if meta_items else ""
+            date_text = meta_items[1].get_text(strip=True) if len(meta_items) > 1 else ""
 
             jobs.append({
                 "company": "Cognizant",
@@ -103,7 +122,7 @@ def scrape(max_pages: int = 5, page_size: int = 10) -> List[Dict]:
                 "job_id": external_id,
                 "title": title,
                 "posting_url": posting_url,
-                "posted_at": None,
+                "posted_at": _parse_posted_at(date_text),
                 "locations": _normalize_location(location_text),
             })
 

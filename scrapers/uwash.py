@@ -88,7 +88,11 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
                 continue
 
             bullet_fields = job.get("bulletFields") or []
-            external_job_id = bullet_fields[0]
+            external_job_id = (
+                bullet_fields[0]
+                if bullet_fields
+                else job.get("externalPath", "").split("/")[-1]
+            )
 
             jobs.append({
                 "company": "University of Washington",

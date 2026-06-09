@@ -12,13 +12,12 @@ _REJECT_TITLE = re.compile(
     r"\b("
     r"principal|staff|senior|sr\.?|lead|manager|director|head|vp|architect|ctj|poly|secret|"
     r"distinguished|fellow|ic4|"
-    r"sde\s*(3|iii|4|iv)|"
-    r"software engineer\s*(iii|3|iv|4|v|5)"
+    r"sde\s*(3|iii|4|iv|5|v)|"
+    r"software\s+engineer\s*(iii|3|iv|4|v|5)|"
+    r"engineer\s+t[4-9]"
     r")\b",
     re.IGNORECASE,
 )
-
-_ALLOW_PREFIX = re.compile(r"\bsoftware engineer\b", re.IGNORECASE)
 
 
 def _session():
@@ -43,7 +42,7 @@ def _keep_title(title: str) -> bool:
     if not title:
         return False
     t = " ".join(title.strip().split())
-    return bool(_ALLOW_PREFIX.search(t) and not _REJECT_TITLE.search(t))
+    return not _REJECT_TITLE.search(t)
 
 
 def _to_posted_at(ts):
@@ -64,7 +63,7 @@ def scrape(max_pages: int = 20) -> list[dict]:
         params = {
             "domain": "microsoft.com",
             "hl": "en",
-            "query": "software engineer",
+            "query": "engineer",
             "location": "United States",
             "sort_by": "timestamp",
             "start": start,

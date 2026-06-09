@@ -1,7 +1,7 @@
 import re
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 
 BASE_URL = "https://salesforce.wd12.myworkdayjobs.com/en-US/External_Career_Site"
@@ -14,6 +14,7 @@ REJECT_TITLE = re.compile(
 )
 
 POSTED_DAYS_RE = re.compile(r"Posted\s+(\d+)\s+Days?\s+Ago", re.IGNORECASE)
+POSTED_30_PLUS_RE = re.compile(r"Posted\s+30\+\s+Days?\s+Ago", re.IGNORECASE)
 
 
 def _parse_posted_at(posted_on: str):
@@ -22,15 +23,20 @@ def _parse_posted_at(posted_on: str):
 
     text = posted_on.strip().lower()
 
+    now = datetime.now(timezone.utc)
+
     if text == "posted today":
-        return datetime.utcnow()
+        return now
 
     if text == "posted yesterday":
-        return datetime.utcnow() - timedelta(days=1)
+        return now - timedelta(days=1)
+
+    if POSTED_30_PLUS_RE.search(posted_on):
+        return now - timedelta(days=30)
 
     m = POSTED_DAYS_RE.search(posted_on)
     if m:
-        return datetime.utcnow() - timedelta(days=int(m.group(1)))
+        return now - timedelta(days=int(m.group(1)))
 
     return None
 
@@ -67,10 +73,16 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
             "searchText": "",
         }
 
-        r = requests.post(API_URL, json=payload, timeout=30)
-        r.raise_for_status()
-
-        data = r.json()
+        try:
+            r = requests.post(API_URL, json=payload, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+        except requests.RequestException as e:
+            print(f"Salesforce page {page + 1}: request failed - {e}")
+            break
+        except ValueError:
+            print(f"Salesforce page {page + 1}: invalid JSON response, skipping")
+            break
         postings = data.get("jobPostings", [])
         if not postings:
             break

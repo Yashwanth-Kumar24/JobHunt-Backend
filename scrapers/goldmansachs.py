@@ -18,7 +18,9 @@ REJECT_TITLE = re.compile(
 ACCEPT_TITLE = re.compile(
     r"\b("
     r"software\s+engineer|software\s+developer|"
-    r"software|engineer|developer"
+    r"software|engineer|developer|analyst|quantitative|"
+    r"data\s+engineer|ml\s+engineer|systems\s+engineer|platform\s+engineer|"
+    r"site\s+reliability|devops|cloud\s+engineer|security\s+engineer"
     r")\b",
     re.IGNORECASE,
 )

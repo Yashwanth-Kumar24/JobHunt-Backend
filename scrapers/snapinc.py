@@ -133,7 +133,7 @@ def scrape(max_pages: int = 15, page_size: int = 20) -> List[Dict]:
                 "job_id": external_job_id,
                 "title": title,
                 "posting_url": BASE_URL + job.get("externalPath", ""),
-                "posted_at": _parse_posted_at(job.get("postedOn")),
+                "posted_at": posted_at,
                 "locations": _normalize_locations(job.get("locationsText")),
             })
 

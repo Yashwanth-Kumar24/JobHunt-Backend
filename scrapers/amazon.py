@@ -9,7 +9,9 @@ AMAZON_SEARCH_URL = "https://www.amazon.jobs/en/search.json"
 # Reject only senior / leadership roles
 REJECT_TITLE = re.compile(
     r"\b("
-    r"senior|sr\.?|principal|lead|manager|architect|staff|sdm|director"
+    r"senior|sr\.?|principal|lead|manager|architect|staff|sdm|director|"
+    r"sde\s*(iii|3|iv|4|v|5)|"
+    r"software\s+development\s+engineer\s+(iii|3|iv|4|v|5)"
     r")\b",
     re.IGNORECASE,
 )
@@ -39,25 +41,19 @@ def _normalize_location(raw: str) -> List[str]:
     city, state, country = parts
 
     state_map = {
-        "Washington": "WA",
-        "California": "CA",
-        "New York": "NY",
-        "Texas": "TX",
-        "Virginia": "VA",
-        "Massachusetts": "MA",
-        "Colorado": "CO",
-        "New Jersey": "NJ",
-        "Georgia": "GA",
-        "Illinois": "IL",
-        "Wisconsin": "WI",
-        "Michigan": "MI",
-        "Florida": "FL",
-        "Maryland": "MD",
-        "Nevada": "NV",
-        "Ohio": "OH",
-        "Minnesota": "MN",
-        "Tennessee": "TN",
-        "Missouri": "MO",
+        "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR",
+        "California": "CA", "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE",
+        "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+        "Illinois": "IL", "Indiana": "IN", "Iowa": "IA", "Kansas": "KS",
+        "Kentucky": "KY", "Louisiana": "LA", "Maine": "ME", "Maryland": "MD",
+        "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+        "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
+        "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
+        "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+        "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC",
+        "South Dakota": "SD", "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+        "Vermont": "VT", "Virginia": "VA", "Washington": "WA", "West Virginia": "WV",
+        "Wisconsin": "WI", "Wyoming": "WY", "District of Columbia": "DC",
     }
 
 

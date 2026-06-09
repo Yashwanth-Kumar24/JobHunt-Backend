@@ -16,6 +16,7 @@ REJECT_TITLE = re.compile(
 )
 
 POSTED_DAYS_RE = re.compile(r"Posted\s+(\d+)\s+Days?\s+Ago", re.IGNORECASE)
+POSTED_30_PLUS_RE = re.compile(r"Posted\s+30\+\s+Days?\s+Ago", re.IGNORECASE)
 
 def _parse_posted_at(posted_on: str):
     if not posted_on:
@@ -29,6 +30,9 @@ def _parse_posted_at(posted_on: str):
 
     if text == "posted yesterday":
         return now - timedelta(days=1)
+
+    if POSTED_30_PLUS_RE.search(posted_on):
+        return now - timedelta(days=30)
 
     m = POSTED_DAYS_RE.search(posted_on)
     if m:
@@ -69,10 +73,16 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
             "searchText": "",
         }
 
-        r = requests.post(API_URL, json=payload, timeout=30)
-        r.raise_for_status()
-
-        data = r.json()
+        try:
+            r = requests.post(API_URL, json=payload, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+        except requests.RequestException as e:
+            print(f"Fidelity page {page + 1}: request failed - {e}")
+            break
+        except ValueError:
+            print(f"Fidelity page {page + 1}: invalid JSON response, skipping")
+            break
         postings = data.get("jobPostings", [])
         if not postings:
             break
@@ -100,7 +110,6 @@ def scrape(max_pages: int = 20, page_size: int = 20) -> List[Dict]:
                 "posting_url": BASE_URL + job.get("externalPath", ""),
                 "posted_at": _parse_posted_at(job.get("postedOn")),
                 "locations": _normalize_locations(job.get("locationsText")),
-                "page":page
             })
             kept += 1
 

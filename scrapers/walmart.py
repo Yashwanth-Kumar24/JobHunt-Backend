@@ -70,10 +70,10 @@ def _get_session_headers():
         }, timeout=30)
         csrf_token = session.cookies.get("CALYPSO_CSRF_TOKEN")
         print(f"Walmart session init: status={resp.status_code}, csrf={'found' if csrf_token else 'missing'}")
+        h = dict(HEADERS)
         if csrf_token:
-            h = dict(HEADERS)
             h["x-calypso-csrf-token"] = csrf_token
-            return h, session
+        return h, session
     except Exception as e:
         print(f"Walmart session init failed: {e}")
     return HEADERS, session

@@ -87,6 +87,8 @@ def scrape(page_size: int = 1000) -> List[Dict]:
             continue
 
         external_job_id = job.get("refNumber")
+        if not external_job_id:
+            continue
 
         jobs.append({
             "company": "Visa",

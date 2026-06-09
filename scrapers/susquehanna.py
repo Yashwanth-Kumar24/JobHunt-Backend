@@ -68,11 +68,13 @@ def scrape(max_pages: int = 5) -> List[Dict]:
         try:
             r = requests.post(API_URL, json=payload, headers=HEADERS, timeout=30)
             r.raise_for_status()
+            data = r.json()
         except requests.RequestException as e:
             print(f"SIG page {page + 1}: request failed - {e}")
             break
-
-        data = r.json()
+        except ValueError:
+            print(f"SIG page {page + 1}: invalid JSON response, skipping")
+            break
         jobs_data = data.get("refineSearch", {}).get("data", {}).get("jobs", [])
 
         if not jobs_data:

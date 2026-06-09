@@ -17,6 +17,7 @@ REJECT_TITLE = re.compile(
 )
 
 POSTED_DAYS_RE = re.compile(r"Posted\s+(\d+)\s+Days?\s+Ago", re.IGNORECASE)
+POSTED_30_PLUS_RE = re.compile(r"Posted\s+30\+\s+Days?\s+Ago", re.IGNORECASE)
 
 
 def _parse_posted_at(posted_on: str):
@@ -31,6 +32,9 @@ def _parse_posted_at(posted_on: str):
 
     if text == "posted yesterday":
         return now - timedelta(days=1)
+
+    if POSTED_30_PLUS_RE.search(posted_on):
+        return now - timedelta(days=30)
 
     m = POSTED_DAYS_RE.search(posted_on)
     if m:

@@ -64,6 +64,9 @@ def _is_us_location(loc_text: str) -> bool:
 def _normalize_locations(loc_text: str) -> List[str]:
     if not loc_text:
         return []
+    # "2 Locations" / "3 Locations" are placeholder strings, not real locations
+    if re.match(r"^\d+\s+locations?$", loc_text.strip(), re.IGNORECASE):
+        return []
     return [loc_text.strip()]
 
 
