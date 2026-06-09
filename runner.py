@@ -73,7 +73,7 @@ jobs.extend(scrape_greenhouse())
 jobs.extend(scrape_qualcomm(max_pages=20))
 jobs.extend(scrape_amd(max_pages=20))
 jobs.extend(scrape_cincinnati(max_pages=10))
-jobs.extend(scrape_wayfair())
+# jobs.extend(scrape_wayfair())  # DataDome CAPTCHA blocks headless browsers
 jobs.extend(scrape_elevancehealth(max_pages=10))
 
 print("Total jobs scraped:", len(jobs))

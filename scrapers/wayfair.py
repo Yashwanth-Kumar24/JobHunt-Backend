@@ -55,19 +55,17 @@ def scrape() -> List[Dict]:
 
         page = context.new_page()
 
-        # Intercept the jobs API response
-        def handle_response(response):
-            if API_PATH in response.url and response.status == 200:
-                try:
-                    api_data["jobs"] = response.json().get("jobListData", [])
-                except Exception:
-                    pass
-
-        page.on("response", handle_response)
-
         print("Wayfair: loading careers page via Playwright...")
-        page.goto(CAREERS_URL, wait_until="networkidle", timeout=60000)
-        page.wait_for_timeout(3000)
+        try:
+            with page.expect_response(
+                lambda r: API_PATH in r.url and r.status == 200,
+                timeout=60000,
+            ) as response_info:
+                page.goto(CAREERS_URL, wait_until="domcontentloaded", timeout=60000)
+            resp = response_info.value
+            api_data["jobs"] = resp.json().get("jobListData", [])
+        except Exception as e:
+            print(f"Wayfair: failed to capture API response - {e}")
 
         browser.close()
 
