@@ -20,12 +20,24 @@ def save_jobs(jobs, db_url, run_started_at):
         with conn.cursor() as cur:
             company_ids = _get_company_ids(cur)
 
+            # Auto-insert any companies not yet in DB
+            unknown = {j["company"] for j in jobs if j.get("company") and j["company"] not in company_ids}
+            for company in unknown:
+                cur.execute(
+                    "INSERT INTO companies (name) VALUES (%s) ON CONFLICT (name) DO NOTHING;",
+                    (company,),
+                )
+                print(f"Auto-inserted company: {company}")
+            if unknown:
+                company_ids = _get_company_ids(cur)
+
             unique_rows = {}
 
             for j in jobs:
                 company = j.get("company")
                 if company not in company_ids:
-                    raise RuntimeError(f"Company not found in DB: {company}")
+                    print(f"WARNING: Company still not found after insert, skipping: {company}")
+                    continue
 
                 company_id = company_ids[company]
                 external_job_id = str(j.get("external_job_id"))

@@ -107,6 +107,7 @@ def scrape(max_pages: int = 15, page_size: int = PAGE_SIZE) -> List[Dict]:
 
         results = data.get("data", {}).get("results", [])
         if not results:
+            print(f"Uber page {page}: no results. Top-level keys: {list(data.keys())}, data keys: {list((data.get('data') or {}).keys())}")
             break
 
         kept = 0

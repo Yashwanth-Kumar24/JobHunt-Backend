@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 
 BASE_URL = "https://lilly.wd5.myworkdayjobs.com/en-US/LLY"
-API_URL = "https://lilly.wd5.myworkdayjobs.com//wday/cxs/lilly/LLY/jobs"
+API_URL = "https://lilly.wd5.myworkdayjobs.com/wday/cxs/lilly/LLY/jobs"
 
 # Reject senior / leadership / non IC roles
 REJECT_TITLE = re.compile(
