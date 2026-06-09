@@ -23,6 +23,9 @@ from scrapers.lilly import scrape as scrape_lilly
 from scrapers.nvidia import scrape as scrape_nvidia
 from scrapers.visa import scrape as scrape_visa
 from scrapers.oracle import scrape as scrape_oracle
+from scrapers.snowflake import scrape as scrape_snowflake
+from scrapers.uber import scrape as scrape_uber
+from scrapers.cardinalhealth import scrape as scrape_cardinalhealth
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -57,6 +60,9 @@ jobs.extend(scrape_lilly(max_pages=5))
 jobs.extend(scrape_nvidia(max_pages=5))
 jobs.extend(scrape_visa())
 jobs.extend(scrape_oracle(max_pages=12))
+jobs.extend(scrape_snowflake(max_pages=10))
+jobs.extend(scrape_uber(max_pages=15))
+jobs.extend(scrape_cardinalhealth(max_pages=10))
 
 print("Total jobs scraped:", len(jobs))
 
