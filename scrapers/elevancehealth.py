@@ -4,7 +4,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 
-BASE_URL = "https://elevancehealth.wd1.myworkdayjobs.com/ANT/"
+BASE_URL = "https://elevancehealth.wd1.myworkdayjobs.com/ANT"
 API_URL = "https://elevancehealth.wd1.myworkdayjobs.com/wday/cxs/elevancehealth/ANT/jobs"
 
 # IT/Technology job family group from network capture
