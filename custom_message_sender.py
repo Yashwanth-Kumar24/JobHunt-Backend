@@ -29,15 +29,32 @@ def send_telegram_message(message: str):
 message = """
 👋 <b>Hello everyone!</b>
 
-🚀 <b>Job Hunt Portal</b>  
+🚀 <b>Job Hunt Portal</b>
 🔗 https://job-hunters-rho.vercel.app
 
 🆕 <b>New companies added</b>
-• Oracle 
+• Snowflake
+• Uber
+• Cardinal Health
+• Qualcomm
+• AMD
+• Wayfair
+• Cincinnati Children's
+• Stripe
+• Databricks
+• Airbnb
+• Lyft
+• Pinterest
+• Robinhood
+• Datadog
+• MongoDB
+• Instacart
+• Palo Alto Networks
+• Dropbox
 
 📌 Explore the latest openings and stay ahead in your job search.
 
-💡 <i>Tip: Check back often, new jobs are added regularly.</i>
+💡 <i>Tip: Check back often, new jobs are added every 4 hours.</i>
 """
 # message = """
 # 👋 Hello everyone!

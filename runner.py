@@ -28,6 +28,9 @@ from scrapers.uber import scrape as scrape_uber
 from scrapers.cardinalhealth import scrape as scrape_cardinalhealth
 from scrapers.greenhouse import scrape as scrape_greenhouse
 from scrapers.qualcomm import scrape as scrape_qualcomm
+from scrapers.amd import scrape as scrape_amd
+from scrapers.cincinnatichildrens import scrape as scrape_cincinnati
+from scrapers.wayfair import scrape as scrape_wayfair
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -67,6 +70,9 @@ jobs.extend(scrape_uber(max_pages=15))
 jobs.extend(scrape_cardinalhealth(max_pages=10))
 jobs.extend(scrape_greenhouse())
 jobs.extend(scrape_qualcomm(max_pages=20))
+jobs.extend(scrape_amd(max_pages=20))
+jobs.extend(scrape_cincinnati(max_pages=10))
+jobs.extend(scrape_wayfair())
 
 print("Total jobs scraped:", len(jobs))
 

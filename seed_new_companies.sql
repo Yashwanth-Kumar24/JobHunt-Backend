@@ -17,7 +17,10 @@ INSERT INTO companies (name, careers_url) VALUES
   ('Instacart',          'https://instacart.careers'),
   ('Palo Alto Networks', 'https://jobs.paloaltonetworks.com'),
   ('Dropbox',            'https://jobs.dropbox.com'),
-  ('Eli Lilly',          'https://lilly.wd5.myworkdayjobs.com/en-US/LLY')
+  ('Eli Lilly',          'https://lilly.wd5.myworkdayjobs.com/en-US/LLY'),
+  ('AMD',                'https://careers.amd.com/careers-home/jobs'),
+  ('Cincinnati Children''s', 'https://jobs.cincinnatichildrens.org/search-jobs'),
+  ('Wayfair',               'https://www.wayfair.com/careers/jobs/?teamIds=1&countryIds=1')
 ON CONFLICT (name) DO UPDATE
   SET careers_url = EXCLUDED.careers_url
   WHERE companies.careers_url IS NULL;
