@@ -4,6 +4,13 @@ import requests
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict
 
+# Matches "San Francisco, CA" / "New York, NY" etc.
+_US_STATE_RE = re.compile(
+    r",\s*(?:AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|"
+    r"MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC)\b",
+    re.IGNORECASE,
+)
+
 # One entry per company: (display_name, greenhouse_token, departments_to_keep)
 # departments_to_keep: set of lowercase substrings — job kept if any match dept name
 # Pass None to keep all Engineering-like departments
@@ -55,13 +62,17 @@ def _is_us_location(location_name: str) -> bool:
         "united states" in text
         or ", us" in text
         or text.endswith(" us")
-        or "remote" in text  # many US remotes listed without country
+        or "remote" in text
         or "usa" in text
+        or bool(_US_STATE_RE.search(location_name))  # "San Francisco, CA" etc.
     )
 
 
 def _dept_matches(departments: List[Dict], keep_set) -> bool:
     if keep_set is None:
+        return True
+    # If no department info available, don't reject — title filter is enough
+    if not departments:
         return True
     for dept in departments:
         name = (dept.get("name") or "").lower()
