@@ -1,24 +1,12 @@
 import re
-import requests
 from typing import List, Dict
+from playwright.sync_api import sync_playwright
 
-API_URL = "https://www.wayfair.com/a/careers/careers/job_search_data"
+CAREERS_URL = "https://www.wayfair.com/careers/jobs?teamIds=1&countryIds=1"
+API_PATH = "/a/careers/careers/job_search_data"
 BASE_URL = "https://www.wayfair.com/careers/jobs"
 
-HEADERS = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
-    "Origin": "https://www.wayfair.com",
-    "Referer": "https://www.wayfair.com/careers/jobs/?teamIds=1&countryIds=1",
-    "x-requested-with": "XMLHttpRequest",
-}
-
-# teamId=1 is the Tech/Engineering org; countryId=1 is United States
-TEAM_ID = 1
-COUNTRY_ID = 1
-
-# Keep only engineering/ML categories; skip PM, UX, Employee Technology (warehouse IT)
+# Keep only engineering/ML categories; skip PM, UX, Employee Technology
 KEEP_CATEGORY_IDS = {
     3,   # App Engineering
     6,   # Data Science & Machine Learning
@@ -37,35 +25,59 @@ REJECT_TITLE = re.compile(
 
 
 def scrape() -> List[Dict]:
-    payload = {
-        "categoryIds": [],
-        "teamIds": [TEAM_ID],
-        "locationIds": [],
-        "countryIds": [COUNTRY_ID],
-        "teamCategoryIds": [],
-        "stateIds": [],
-        "keywords": "",
-        "selectedJobTypeIds": [],
-        "updatedFilterPanel": "selectedTeamIds",
-    }
+    jobs: List[Dict] = []
+    api_data = {}
 
-    try:
-        r = requests.post(API_URL, json=payload, headers=HEADERS, timeout=30)
-        r.raise_for_status()
-        data = r.json()
-    except requests.RequestException as e:
-        print(f"Wayfair: request failed - {e}")
-        return []
-    except ValueError:
-        print(f"Wayfair: invalid JSON response, skipping")
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+            ],
+        )
+
+        context = browser.new_context(
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/148.0.0.0 Safari/537.36"
+            )
+        )
+
+        context.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+        """)
+
+        page = context.new_page()
+
+        # Intercept the jobs API response
+        def handle_response(response):
+            if API_PATH in response.url and response.status == 200:
+                try:
+                    api_data["jobs"] = response.json().get("jobListData", [])
+                except Exception:
+                    pass
+
+        page.on("response", handle_response)
+
+        print("Wayfair: loading careers page via Playwright...")
+        page.goto(CAREERS_URL, wait_until="networkidle", timeout=60000)
+        page.wait_for_timeout(3000)
+
+        browser.close()
+
+    raw_jobs = api_data.get("jobs", [])
+    if not raw_jobs:
+        print("Wayfair: no jobs captured from API response")
         return []
 
-    raw_jobs = data.get("jobListData", [])
-    jobs = []
     kept = 0
-
     for job in raw_jobs:
-        # Skip non-engineering categories
         cat_id = (job.get("category") or {}).get("id")
         if cat_id not in KEEP_CATEGORY_IDS:
             continue
@@ -96,7 +108,7 @@ def scrape() -> List[Dict]:
 
 
 if __name__ == "__main__":
-    res = scrape(max_pages=5)
+    res = scrape()
     print("Total:", len(res))
     if res:
         print("Sample:", res[0])
