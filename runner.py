@@ -31,6 +31,7 @@ from scrapers.qualcomm import scrape as scrape_qualcomm
 from scrapers.amd import scrape as scrape_amd
 from scrapers.cincinnatichildrens import scrape as scrape_cincinnati
 from scrapers.wayfair import scrape as scrape_wayfair
+from scrapers.elevancehealth import scrape as scrape_elevancehealth
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -73,6 +74,7 @@ jobs.extend(scrape_qualcomm(max_pages=20))
 jobs.extend(scrape_amd(max_pages=20))
 jobs.extend(scrape_cincinnati(max_pages=10))
 jobs.extend(scrape_wayfair())
+jobs.extend(scrape_elevancehealth(max_pages=10))
 
 print("Total jobs scraped:", len(jobs))
 
