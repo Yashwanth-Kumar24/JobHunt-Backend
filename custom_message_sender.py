@@ -27,34 +27,42 @@ def send_telegram_message(message: str):
     response.raise_for_status()
 
 message = """
-👋 <b>Hello everyone!</b>
+🚀 <b>JobHunt Dashboard — Major Update</b>
 
-🚀 <b>Job Hunt Portal</b>
+We've shipped a completely redesigned dashboard. Here's what's new:
+
+📅 <b>Day Strip</b>
+Pick any day to instantly filter jobs + stats. See exactly how many roles landed on Jun 4 vs Jun 8 — no more guessing.
+
+📊 <b>Live Stats Bar</b>
+Stats now update in real time as you filter — by day, location, status, or search. Always reflects what you're actually looking at.
+
+🔍 <b>Smart Search</b>
+Search across company, title, job ID, and location simultaneously — results are instant.
+
+⚡ <b>Full 30-Day Data</b>
+Previously only the last 7 days loaded fully. Now the complete 30-day window loads without truncation.
+
+🎨 <b>Freshness Colors</b>
+Posted date column now shows:
+🟢 Today  🔵 Yesterday  🟡 2–3 days  ⚫ Older
+
+✅ <b>Application Tracker</b>
+Track every application through 5 stages: Applied → Screening → Interview → Offer → Rejected. Add notes per job. Export everything to CSV.
+
+🆕 <b>NEW Badge</b>
+Jobs you haven't seen before are clearly marked.
+
+🌙 <b>Dark Mode</b>
+Full dark mode, system-aware with manual toggle.
+
 🔗 https://job-hunters-rho.vercel.app
 
-🆕 <b>New companies added</b>
-• Snowflake
-• Uber
-• Cardinal Health
-• Qualcomm
-• AMD
-• Wayfair
-• Cincinnati Children's
-• Stripe
-• Databricks
-• Airbnb
-• Lyft
-• Pinterest
-• Robinhood
-• Datadog
-• MongoDB
-• Instacart
-• Palo Alto Networks
-• Dropbox
+⏱ New jobs are added every 2 hours — check back daily to stay ahead.
 
-📌 Explore the latest openings and stay ahead in your job search.
-
-💡 <i>Tip: Check back often, new jobs are added every 4 hours.</i>
+—
+🏢 More companies being added regularly.
+Know a company that sponsors H1B or is STEM OPT friendly? Drop a message to the admin and we'll get it added.
 """
 # message = """
 # 👋 Hello everyone!

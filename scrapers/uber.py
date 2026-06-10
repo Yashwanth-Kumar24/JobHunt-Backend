@@ -18,21 +18,21 @@ HEADERS = {
 # Uber levels: L3=new grad, L4=junior, L5=mid, L5B/L6+=senior/staff
 KEEP_LEVELS = {"3", "4", "5"}
 
-# US locations to search — covers all major Uber engineering hubs
+# US locations — API expects objects, NOT strings
 US_LOCATIONS = [
-    "USA-California-San Francisco",
-    "USA-California-Sunnyvale",
-    "USA-California-Los Angeles",
-    "USA-New York-New York",
-    "USA-Washington-Seattle",
-    "USA-Illinois-Chicago",
-    "USA-Texas-Dallas",
-    "USA-Colorado-Denver",
-    "USA-Georgia-Atlanta",
-    "USA-Massachusetts-Boston",
-    "USA-Florida-Miami",
-    "USA-Arizona-Phoenix",
-    "USA-Tennessee-Nashville",
+    {"country": "USA", "region": "California",        "city": "San Francisco"},
+    {"country": "USA", "region": "California",        "city": "Sunnyvale"},
+    {"country": "USA", "region": "California",        "city": "Los Angeles"},
+    {"country": "USA", "region": "New York",          "city": "New York"},
+    {"country": "USA", "region": "Washington",        "city": "Seattle"},
+    {"country": "USA", "region": "Illinois",          "city": "Chicago"},
+    {"country": "USA", "region": "Texas",             "city": "Dallas"},
+    {"country": "USA", "region": "Colorado",          "city": "Denver"},
+    {"country": "USA", "region": "Georgia",           "city": "Atlanta"},
+    {"country": "USA", "region": "Massachusetts",     "city": "Boston"},
+    {"country": "USA", "region": "Florida",           "city": "Miami"},
+    {"country": "USA", "region": "Arizona",           "city": "Phoenix"},
+    {"country": "USA", "region": "Tennessee",         "city": "Nashville"},
 ]
 
 REJECT_TITLE = re.compile(
@@ -80,17 +80,20 @@ def _normalize_locations(job: Dict) -> List[str]:
 
 def scrape(max_pages: int = 15, page_size: int = PAGE_SIZE) -> List[Dict]:
     jobs: List[Dict] = []
-    page = 1
+    page = 0  # Uber API is 0-indexed
 
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
 
-    while page <= max_pages:
+    while page < max_pages:
         payload = {
             "limit": page_size,
             "page": page,
             "params": {
-                "department": ["Engineering"],
+                "department": ["Engineering", "Data Science"],
                 "location": US_LOCATIONS,
+                "lineOfBusinessName": [],
+                "programAndPlatform": [],
+                "team": [],
             },
         }
 
@@ -155,7 +158,7 @@ def scrape(max_pages: int = 15, page_size: int = PAGE_SIZE) -> List[Dict]:
             break
 
         page += 1
-        time.sleep(0.5)
+        time.sleep(0.6)
 
     deduped = {j["external_job_id"]: j for j in jobs}
     print("Uber jobs:", len(deduped))

@@ -1,138 +1,117 @@
 import re
 import time
+import requests
+from datetime import datetime, timezone
 from typing import List, Dict
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
 
-SEARCH_URL = (
-    "https://careersatdoordash.com/job-search/"
-    "?keyword=&location=United%20States"
-    "&intern=0"
-    "&function=Software%20Engineering%7CData%20Engineering%7CData%20Science"
-    "%7CMachine%20Learning%20Engineering%7CSolutions%20Architect"
-    "%7CBusiness%20Intelligence%7CQuality%20Assurance"
-    "%7CBusiness%20Systems%20Analyst%7CIT%20Support%7C"
-    "&spage={page}"
-)
+# Remix data endpoint — works like a standard GET, returns JSON
+API_URL = "https://job-boards.greenhouse.io/doordashusa"
+DATA_PARAM = "routes/$url_token"
 
-ALLOWED_FUNCTIONS = {
-    "Software Engineering",
-    "Data Engineering",
-    "Data Science",
-    "Machine Learning Engineering",
-    "Solutions Architect",
-    "Business Intelligence",
-    "Quality Assurance",
-    "Business Systems Analyst",
-    "IT Support",
+HEADERS = {
+    "Accept": "application/json, */*",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "Referer": "https://job-boards.greenhouse.io/doordashusa",
 }
+
+# Exactly the two departments DoorDash uses on their own careers page filter
+DEPT_IDS = [
+    57486,   # 242 IT
+    2438,    # 310 Engineering (parent — covers all engineering sub-departments)
+]
 
 REJECT_TITLE = re.compile(
     r"\b("
-    r"director|principal|manager|head|lead|vice president|president"
+    r"senior|sr\.?|principal|staff|director|manager|head|lead|"
+    r"vp|vice\s*president|president|architect|distinguished|fellow|"
+    r"partner|advisor|counsel|recruiter|chief"
     r")\b",
     re.IGNORECASE,
 )
 
+PAGE_SIZE = 50
 
-def scrape(max_pages: int = 5) -> List[Dict]:
+
+def _parse_published_at(date_str: str):
+    if not date_str:
+        return None
+    try:
+        return datetime.fromisoformat(date_str).astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def scrape(max_pages: int = 10) -> List[Dict]:
     jobs: List[Dict] = []
+    # No date cutoff — DoorDash's engineering board is small (2 pages) and roles stay open for months.
+    # Capture all open positions; the frontend's range picker handles display filtering.
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-            ],
-        )
+    # Build department query string manually (requests doesn't handle repeated keys well)
+    dept_qs = "&".join(f"departments[]={d}" for d in DEPT_IDS)
 
-        context = browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/122.0.0.0 Safari/537.36"
-            )
-        )
+    for page in range(1, max_pages + 1):
+        url = f"{API_URL}?{dept_qs}&page={page}&_data={DATA_PARAM}"
 
-        context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            window.chrome = { runtime: {} };
-            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
-            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
-        """)
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+        except requests.RequestException as e:
+            print(f"DoorDash page {page}: request failed - {e}")
+            break
+        except ValueError:
+            print(f"DoorDash page {page}: invalid JSON")
+            break
 
-        page = context.new_page()
+        posts = data.get("jobPosts", {})
+        job_list = posts.get("data", [])
+        total_pages = posts.get("total_pages", 1)
 
-        for page_num in range(1, max_pages + 1):
-            url = SEARCH_URL.format(page=page_num)
-            print(f"Loading DoorDash page {page_num}")
+        if not job_list:
+            break
 
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_timeout(4000)
+        kept = 0
+        for job in job_list:
+            title = (job.get("title") or "").strip()
+            if not title or REJECT_TITLE.search(title):
+                continue
 
-            html = page.content()
-            soup = BeautifulSoup(html, "html.parser")
-            cards = soup.select("div.job-item")
+            loc_raw = job.get("location") or ""
+            location_name = loc_raw.get("name") if isinstance(loc_raw, dict) else str(loc_raw)
 
-            print(f"DoorDash page {page_num}: DOM jobs found: {len(cards)}")
+            posted_at = _parse_published_at(job.get("published_at"))
+            if not posted_at:
+                continue
 
-            if not cards:
-                break
+            job_id = str(job.get("id") or "")
+            if not job_id:
+                continue
 
-            for card in cards:
-                title_el = card.select_one("div.title-container a")
-                if not title_el:
-                    continue
+            jobs.append({
+                "company": "DoorDash",
+                "external_job_id": job_id,
+                "job_id": job_id,
+                "title": title,
+                "posting_url": job.get("absolute_url") or f"https://job-boards.greenhouse.io/doordashusa/jobs/{job_id}",
+                "posted_at": posted_at,
+                "locations": [location_name] if location_name else [],
+            })
+            kept += 1
 
-                title = title_el.get_text(strip=True)
-                if REJECT_TITLE.search(title):
-                    continue
+        print(f"DoorDash page {page}/{total_pages}: scanned={len(job_list)} kept={kept}")
 
-                href = title_el.get("href", "").strip()
-                if not href:
-                    continue
+        if page >= total_pages:
+            break
 
-                posting_url = href
+        time.sleep(0.5)
 
-                job_id_el = card.select_one("div.title-container .label")
-                external_job_id = (
-                    job_id_el.get_text(strip=True).replace("Job ID:", "").strip()
-                    if job_id_el else None
-                )
-
-                location_el = card.select_one("div.location-container .value-secondary")
-                location = location_el.get_text(strip=True) if location_el else ""
-
-                function_el = card.select_one("div.function-container .value-secondary")
-                function = function_el.get_text(strip=True) if function_el else ""
-
-                if function not in ALLOWED_FUNCTIONS:
-                    continue
-
-                jobs.append({
-                    "company": "DoorDash",
-                    "external_job_id": external_job_id,
-                    "job_id": external_job_id,
-                    "title": title,
-                    "posting_url": posting_url,
-                    "posted_at": None,
-                    "locations": [location] if location else [],
-                    "function": function,
-                })
-
-            time.sleep(1)
-
-        browser.close()
-
-    deduped = {j["external_job_id"]: j for j in jobs if j["external_job_id"]}
+    deduped = {j["external_job_id"]: j for j in jobs}
     print("DoorDash jobs:", len(deduped))
     return list(deduped.values())
 
 
 if __name__ == "__main__":
-    results = scrape(max_pages=1)
-    print("Total DoorDash jobs:", len(results))
-    if results:
-        print("Sample:", results[0])
+    res = scrape()
+    print("Total DoorDash jobs:", len(res))
+    if res:
+        print("Sample:", res[0])

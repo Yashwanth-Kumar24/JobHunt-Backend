@@ -21,7 +21,9 @@ INSERT INTO companies (name, careers_url) VALUES
   ('AMD',                'https://careers.amd.com/careers-home/jobs'),
   ('Cincinnati Children''s', 'https://jobs.cincinnatichildrens.org/search-jobs'),
   ('Wayfair',               'https://www.wayfair.com/careers/jobs/?teamIds=1&countryIds=1'),
-  ('Elevance Health',       'https://elevancehealth.wd1.myworkdayjobs.com/ANT/jobs')
+  ('Elevance Health',       'https://elevancehealth.wd1.myworkdayjobs.com/ANT/jobs'),
+  ('DoorDash',              'https://job-boards.greenhouse.io/doordashusa'),
+  ('Guidewire',             'https://guidewire.wd5.myworkdayjobs.com/external')
 ON CONFLICT (name) DO UPDATE
   SET careers_url = EXCLUDED.careers_url
   WHERE companies.careers_url IS NULL;

@@ -1,7 +1,7 @@
 import re
 import time
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from typing import List, Dict
@@ -77,12 +77,16 @@ def _keep_title(title: str) -> bool:
     return not REJECT_TITLE.search(title)
 
 
+PAGE_SIZE = 25
+
+
 def scrape(max_pages: int = 20) -> List[Dict]:
     session = _session()
     csrf_token = _get_csrf_token(session)
     if csrf_token:
         session.headers["x-csrf-token"] = csrf_token
 
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
     start = 0
     results = []
 
@@ -92,13 +96,9 @@ def scrape(max_pages: int = 20) -> List[Dict]:
             "query": "",
             "location": "United States",
             "start": start,
-            "sort_by": "distance",
+            "sort_by": "date",
+            "filter_job_family": JOB_FAMILIES,
         }
-        # Add each job family as a separate param
-        for jf in JOB_FAMILIES:
-            params.setdefault("filter_job_family", [])
-            if isinstance(params["filter_job_family"], list):
-                params["filter_job_family"].append(jf)
 
         try:
             r = session.get(SEARCH, params=params, timeout=(5, 20))
@@ -115,6 +115,7 @@ def scrape(max_pages: int = 20) -> List[Dict]:
             break
 
         kept = 0
+        stop_early = False
         for p in positions:
             title = (p.get("name") or "").strip()
             if not _keep_title(title):
@@ -126,20 +127,30 @@ def scrape(max_pages: int = 20) -> List[Dict]:
             if not us_locs:
                 continue
 
-            pos_url = p.get("positionUrl") or ""
+            posted_at = _to_posted_at(p.get("postedTs"))
+            if not posted_at:
+                continue
+            # Since we sort by date desc, once we hit older than 30d we can stop
+            if posted_at < cutoff_date:
+                stop_early = True
+                break
 
+            pos_url = p.get("positionUrl") or ""
             results.append({
                 "company": "Qualcomm",
                 "external_job_id": str(p.get("id")),
                 "job_id": p.get("displayJobId") or str(p.get("id")),
                 "title": title.lstrip("#").strip(),
                 "posting_url": BASE + pos_url if pos_url.startswith("/") else pos_url,
-                "posted_at": _to_posted_at(p.get("postedTs")),
+                "posted_at": posted_at,
                 "locations": us_locs,
             })
             kept += 1
 
         print(f"Qualcomm page {page + 1}: scanned={len(positions)} kept={kept}")
+
+        if stop_early or len(positions) < PAGE_SIZE:
+            break
 
         start += len(positions)
         time.sleep(0.5)

@@ -32,6 +32,7 @@ from scrapers.amd import scrape as scrape_amd
 from scrapers.cincinnatichildrens import scrape as scrape_cincinnati
 from scrapers.wayfair import scrape as scrape_wayfair
 from scrapers.elevancehealth import scrape as scrape_elevancehealth
+from scrapers.guidewire import scrape as scrape_guidewire
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -50,7 +51,7 @@ jobs.extend(scrape_salesforce(max_pages=5))
 jobs.extend(scrape_fidelity(max_pages=5))
 jobs.extend(scrape_cognizant(max_pages=5))
 jobs.extend(scrape_uwash(max_pages=5))
-# jobs.extend(scrape_doordash(max_pages=1))
+jobs.extend(scrape_doordash())
 jobs.extend(scrape_ssc(max_pages=5))
 jobs.extend(scrape_synechron(max_pages=2))
 jobs.extend(scrape_goldmansachs(max_pages=5))
@@ -75,6 +76,7 @@ jobs.extend(scrape_amd(max_pages=20))
 jobs.extend(scrape_cincinnati(max_pages=10))
 # jobs.extend(scrape_wayfair())  # DataDome CAPTCHA blocks headless browsers
 jobs.extend(scrape_elevancehealth(max_pages=10))
+jobs.extend(scrape_guidewire())
 
 print("Total jobs scraped:", len(jobs))
 
