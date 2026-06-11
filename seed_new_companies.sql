@@ -23,7 +23,8 @@ INSERT INTO companies (name, careers_url) VALUES
   ('Elevance Health',       'https://elevancehealth.wd1.myworkdayjobs.com/ANT/jobs'),
   ('DoorDash',              'https://job-boards.greenhouse.io/doordashusa'),
   ('Guidewire',             'https://guidewire.wd5.myworkdayjobs.com/external'),
-  ('Figma',                 'https://www.figma.com/careers/')
+  ('Figma',                 'https://www.figma.com/careers/'),
+  ('CVS Health',            'https://cvshealth.wd1.myworkdayjobs.com/CVS_Health_Careers/jobs')
 ON CONFLICT (name) DO UPDATE
   SET careers_url = EXCLUDED.careers_url
   WHERE companies.careers_url IS NULL;

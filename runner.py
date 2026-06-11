@@ -34,6 +34,7 @@ from scrapers.wayfair import scrape as scrape_wayfair
 from scrapers.elevancehealth import scrape as scrape_elevancehealth
 from scrapers.guidewire import scrape as scrape_guidewire
 from scrapers.figma import scrape as scrape_figma
+from scrapers.cvshealth import scrape as scrape_cvshealth
 
 from db_writer import save_jobs
 from notify_telegram import notify_telegram
@@ -79,6 +80,7 @@ jobs.extend(scrape_cincinnati(max_pages=10))
 jobs.extend(scrape_elevancehealth(max_pages=10))
 jobs.extend(scrape_guidewire())
 jobs.extend(scrape_figma())
+jobs.extend(scrape_cvshealth())
 
 print("Total jobs scraped:", len(jobs))
 
