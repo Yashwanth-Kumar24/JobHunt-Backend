@@ -66,13 +66,19 @@ def scrape(max_pages: int = 15, page_size: int = 20) -> List[Dict]:
         }
 
         try:
-            r = requests.post(API_URL, json=payload, timeout=30)
+            r = requests.post(
+                API_URL, json=payload, timeout=30,
+                headers={"Content-Type": "application/json", "Accept": "application/json",
+                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+            )
             r.raise_for_status()
+            data = r.json()
         except requests.RequestException as e:
             print(f"Lilly page {page + 1}: request failed - {e}")
             break
-
-        data = r.json()
+        except ValueError:
+            print(f"Lilly page {page + 1}: empty/invalid response, skipping")
+            break
         
         postings = data.get("jobPostings", [])
         if not postings:
